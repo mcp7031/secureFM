@@ -5,8 +5,11 @@ from rest_framework.mixins import ListModelMixin, CreateModelMixin
 from rest_framework.decorators import api_view 
 from rest_framework.response import Response
 from api.utils.exceptionhandler import custom_exception_handler
+from rest_framework.views import APIView
 
 # Create your views here.
+# class query_tenant(APIView):
+    
 @api_view()
 def query_tenant(request):
     x = 1

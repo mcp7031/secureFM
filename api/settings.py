@@ -14,7 +14,7 @@ from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-GOOGLE_API_KEY = 'AIzaSyD--your-google-maps-key-SjQBE'
+# GOOGLE_API_KEY = 'AIzaSyD--your-google-maps-key-SjQBE'
 
 
 # Quick-start development settings - unsuitable for production
@@ -46,11 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'address',
     'ppt',
     'govern',
     'imanage',
-    'tenants',
     'debug_toolbar',
 ]
 
@@ -110,6 +108,12 @@ DATABASES = {
         'HOST' : 'localhost',
         'USER' : 'dca',
         'PASSWORD' : 'Katie@1992',
+    },
+    'ppt_docs': {
+        'ENGINE': 'djongo',
+        'NAME': 'ppt_db',
+        'HOST': 'localhost',
+        'ENFORCE_SCHEMA': False,
     }
 }
 

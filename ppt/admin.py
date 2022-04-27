@@ -21,5 +21,14 @@ class LocationCentreAdmin(admin.ModelAdmin):
 class NominalAdmin(admin.ModelAdmin):
     fields=('costCentre', 'location', 'firstName', 'lastName', 'dateBirth', 'driverLicense', 'driverClass', 'address1')
 
+@admin.register(models.Contractor)
+class ContractorAdmin(admin.ModelAdmin):
+    fields=('companyName', 'companyNumber', 'companyPhone', 'contactL1')
+
+@admin.register(models.Personnel)
+class PersonnelAdmin(admin.ModelAdmin):
+    fields=('contractor_id', 'services_id', 'dateStart')
+    
+
 
 

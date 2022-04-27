@@ -1,10 +1,12 @@
-CO_MAX = 2
-CC_MAX = 6
-LOC_MAX = 20
-NOM_MAX = 30
-BIMM_MAX = 100
-BIM_MAX = 100
+CO_MAX = 3
+CC_MAX = 8      # cost centre
+LOC_MAX = 24    # locations
+NOM_MAX = 60    # nominals
+BIMM_MAX = 50
+BIM_MAX = 20
 TEN_MAX = 40
-LOG_MAX = 40
+PER_MAX = 20    # personnel
+CON_MAX = 40    # contractors
+LOG_MAX = 40    # log entries
 
 
