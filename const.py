@@ -1,6 +1,6 @@
 CO_MAX = 3
 CC_MAX = 8      # cost centre
-LOC_MAX = 24    # locations
+LOC_MAX = 34    # locations
 NOM_MAX = 60    # nominals
 BIMM_MAX = 50
 BIM_MAX = 20

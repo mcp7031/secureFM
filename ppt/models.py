@@ -1,9 +1,9 @@
 from pyexpat import model
 from djongo import models as mongo
-from ppt.utils import _get_addRole
 from operator import mod
 from django.contrib.auth import get_user_model
 from django.db import models
+from ppt.utils import _get_addRole
 # from django.contrib.mysql.fields import JSONField
 from django.utils import timezone
 from django.core.exceptions import ObjectDoesNotExist
@@ -34,10 +34,10 @@ class Nominal(models.Model):
 #    address2 = AddressField(related_name='+', blank=True, null=True)
     address1 = models.CharField(max_length=255, blank=True, null=True, verbose_name='Address Line 1')
     address2 = models.CharField(max_length=255, blank=True, null=True, verbose_name='Address Line 2')
-    phone = PhoneNumberField(unique=True, null=True, blank=True)
-    mobile = PhoneNumberField(unique=True, null=True, blank=True)
-    safety = models.CharField(max_length=40, blank=True, null=True, verbose_name='Safety Documentation')
-    incident = models.CharField(max_length=40, blank=True, null=True, verbose_name='Incident Documentation')
+    phone = PhoneNumberField(unique=True, null=True, blank=True, verbose_name='Contact phone number')
+    mobile = PhoneNumberField(unique=True, null=True, blank=True, verbose_name='Mobile number')
+#    safety = models.CharField(max_length=40, blank=True, null=True, verbose_name='Safety Documentation')
+#    incident = models.CharField(max_length=40, blank=True, null=True, verbose_name='Incident Documentation')
 
     class Meta:
         ordering=['lastName']
@@ -128,6 +128,8 @@ class Location(models.Model):
     costCentre = models.ForeignKey(CostCentre, on_delete=models.CASCADE)
     locationCode = models.CharField(max_length=26)
     description = models.CharField(max_length=255, blank=True, null=True, verbose_name='Description')
+    length = models.IntegerField(blank=True, null=True, verbose_name='Length')
+    width = models.IntegerField(blank=True, null=True, verbose_name='Width')
     bimmbyloc = models.ManyToManyField(BIMM, through='BIMMbyLocation')
 
     class Meta:
@@ -170,9 +172,9 @@ class NominalGroupAccess(models.Model):
 class Documents(models.Model):
     document_id = models.AutoField(primary_key=True)
     nominal = models.ForeignKey(Nominal, on_delete=models.CASCADE)
-    mongoDB_id = models.CharField(max_length=40, blank=True, null=True)
     docName = models.CharField(max_length=255, verbose_name='name of document')
     docDesc = models.TextField(blank=True, null=True)
+    document = models.CharField(max_length=40, blank=True, null=True)
 
     class Meta:
         ordering=['nominal', 'docName']
@@ -217,18 +219,18 @@ class Contractor(models.Model):
     dateModified = models.DateTimeField(default=timezone.now)
     companyName = models.CharField(max_length=255, verbose_name='Company Name')
     companyNumber = models.CharField(default='999-9999', max_length=8, verbose_name='Company number')
-    companyPhone = PhoneNumberField(unique=True, null=True, blank=True)
+    companyPhone = PhoneNumberField(unique=True, null=True, blank=True, verbose_name='Contact number')
     contactL1 = models.ForeignKey(Nominal, null=True, blank=True, related_name='+', verbose_name='Level 1 Contact', on_delete=models.PROTECT)
     contactL2 = models.ForeignKey(Nominal, null=True, blank=True, related_name='+', verbose_name='Level 2 Contact', on_delete=models.PROTECT)
     contactL3 = models.ForeignKey(Nominal, null=True, blank=True, related_name='+', verbose_name='Level 3 Contact', on_delete=models.PROTECT)
 
-    addRole = property(_get_addRole)
+    # addRole = property(_get_addRole)
 
     class Meta:
         ordering=['companyName']
 
     def __str__(self):
-        return self.contractor_id+" "+self.companyName+" "+self.addRole
+        return self.companyName+" "+contactL1
 
 class Personnel(Nominal):
     contractor = models.ForeignKey(Contractor, on_delete=models.RESTRICT)

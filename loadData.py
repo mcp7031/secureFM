@@ -7,7 +7,9 @@ import datetime
 import mysql.connector
 import const
 from pymongo import MongoClient
+from djongo import models as mongo
 import services
+import locations
 
 global fileName, WRITE_SCRIPT
    
@@ -16,6 +18,13 @@ WRITE_SCRIPT = True
 
 def sqlHeader():
    pass
+
+class Blob(mongo.Model):
+    name = mongo.CharField(max_length=100)
+    tagline = mongo.TextField()
+    
+    class Meta:
+        abstract = True
 
 #
 # connect to mySQL
@@ -316,8 +325,8 @@ class create_nominal:
                                               driverClass,\
                                               address1,\
                                               address2,\
-                                              safety,\
-                                              incident\
+                                              phone,\
+                                              mobile\
                                                ) values\n"
         sqlInsert = re.sub(' +', ' ', sqlInsert)
         lc = ",\n"
@@ -344,9 +353,9 @@ class create_nominal:
             sqlInsert += row['phone'][-4:]+"', '"
             sqlInsert += random.choice(dc_list)+"', '"
             sqlInsert += row['street_addr']+"', '"
-            sqlInsert += row['city']+"', '"
-            sqlInsert += str(safety_id)+"', '" 
-            sqlInsert += str(incident_id)+"')" +lc
+            sqlInsert += row['city']+"', "
+            sqlInsert += row['phone']+", " 
+            sqlInsert += row['phone'].replace('-','')+")" +lc
         print(sqlInsert)
         return sqlInsert
 
@@ -382,6 +391,57 @@ class create_personnel:
         print(sqlInsert)
         return sqlInsert
     
+class create_documents:
+
+    def __init__(self):
+        self.max = const.NOM_MAX+const.PER_MAX
+        self.id_list = []
+        df = pd.read_csv(fileName)
+        self.rd = df.sample(self.max)
+
+    def create_sql(self):
+        sqlInsert = "insert into ppt_documents (document_id,\
+                                                nominal_id,\
+                                                docName,\
+                                                docDesc,\
+                                                document\
+                                                 ) values\n"
+        sqlInsert = re.sub(' +', ' ', sqlInsert)
+        lc = ",\n"
+        for id in range(1, self.max):
+            if (id == self.max-1):
+                lc = ";\n"
+            row = self.rd.iloc[id]
+            docName = row['short_name']
+            document_id = create_document(row, docName)
+            sqlInsert += "("+str(id)+", "
+            sqlInsert += str(random.randrange(1, const.NOM_MAX))+", '"
+            sqlInsert += row['short_name']+"', '"
+            sqlInsert += row['sentence']+"', '"
+            sqlInsert += str(document_id)+"')"+lc
+        print(sqlInsert)
+        return sqlInsert
+
+# create  document
+#
+def create_document(row, docName):
+    document = {
+            "file_title" : docName,
+            "file_URL" : "https://"+row['short_name'].replace(" ","_")+"/"+row['mongo_id'][1:6],
+            "uploaded_by" : row['short_name'][1:5],
+            "created_at" : random_date(0),
+            "updated_by" : row['email'],
+            "company" : row['company_name'],
+            "tags" : [
+                { "name" : row['short_name'] },
+                { "synopsis" : row['sentence'] },
+                ],
+            "version" : "<version>"
+            }
+    res = db_collection.insert_one(document)
+#    print(document)
+    return res.inserted_id
+
 class create_tenant:
 
     def __init__(self):
@@ -467,7 +527,7 @@ class create_contractor:
     def get_id_list(self):
         return self.id_list
 
-class create_location:
+class create_retailLocation:
 
     def __init__(self):
         self.max = const.LOC_MAX
@@ -483,7 +543,9 @@ class create_location:
         sqlInsert = "insert into ppt_location (location_id,\
                                                costCentre_id,\
                                                locationCode,\
-                                               description\
+                                               description,\
+                                               length,\
+                                               width\
                                                ) values\n"
 
         sqlInsert = re.sub(' +', ' ', sqlInsert)
@@ -496,7 +558,62 @@ class create_location:
             sqlInsert += "("+str(id)+", "
             sqlInsert += str(random.randrange(1, const.CC_MAX))+", '"
             sqlInsert += row['access_code']+"', '"
-            sqlInsert += row['retail_dept']+"')"+lc
+            sqlInsert += row['retail_dept']+"', "
+            sqlInsert += str(random.randrange(24,300))+", "
+            sqlInsert += str(random.randrange(18,300))+")"+lc
+        print(sqlInsert)
+        return sqlInsert
+
+        
+    def set_max(self, n):
+        self.max = n
+
+    def get_max(self):
+        return self.max
+
+    def set_costCentre_list(self, cc_list):
+        self.cc_id_list = cc_list
+
+    def get_costCentre_list(self):
+        return self.cc_id_list
+
+    def get_id_list(self):
+        return self.id_list
+
+class create_officeLocation:
+
+    def __init__(self):
+        self.max = const.LOC_MAX*2
+        self.id_list = []
+        self.cc_id_list = []
+        df = pd.read_csv(fileName)
+        self.rd = df.sample(self.max)
+
+    def create_sql(self):
+
+        costCentre_id_list = []
+        bimm_id_list = []
+        sqlInsert = "insert into ppt_location (location_id,\
+                                               costCentre_id,\
+                                               locationCode,\
+                                               description,\
+                                               length,\
+                                               width\
+                                               ) values\n"
+
+        sqlInsert = re.sub(' +', ' ', sqlInsert)
+        lc = ",\n"
+        for id in range(const.LOC_MAX+1, self.max):
+            if (id == self.max-1):
+                lc = ";\n"
+            self.id_list.append(id)
+            row = self.rd.iloc[id]
+            sqlInsert += "("+str(id)+", "
+            sqlInsert += str(random.randrange(1, const.CC_MAX))+", '"
+            sqlInsert += row['access_code']+str(random.randrange(1,60))+"', '"
+            sqlInsert += random.choice(list(locations.LOC))+"', "
+            sqlInsert += str(random.randrange(34,300))+", "
+            sqlInsert += str(random.randrange(28,300))+")"+lc
         print(sqlInsert)
         return sqlInsert
 
@@ -884,6 +1001,13 @@ with mySQLconnection.cursor() as cursor:
     cursor.execute("truncate ppt_nominal;")
     cursor.execute(res)
     mySQLconnection.commit()
+document = create_documents()
+res = document.create_sql()
+with mySQLconnection.cursor() as cursor:
+    cursor.execute("set foreign_key_checks = 0;")
+    cursor.execute("truncate ppt_documents;")
+    cursor.execute(res)
+    mySQLconnection.commit()
 personnel = create_personnel()
 res = personnel.create_sql()
 with mySQLconnection.cursor() as cursor:
@@ -898,11 +1022,17 @@ with mySQLconnection.cursor() as cursor:
     cursor.execute("truncate ppt_tenant;")
     cursor.execute(res)
     mySQLconnection.commit()
-location = create_location()
+location = create_retailLocation()
 res = location.create_sql()
 with mySQLconnection.cursor() as cursor:
     cursor.execute("set foreign_key_checks = 0;")
     cursor.execute("truncate ppt_location;")
+    cursor.execute(res)
+    mySQLconnection.commit()
+location = create_officeLocation()
+res = location.create_sql()
+with mySQLconnection.cursor() as cursor:
+    cursor.execute("set foreign_key_checks = 0;")
     cursor.execute(res)
     mySQLconnection.commit()
 BIMMbyLoc = create_bimmbylocation()

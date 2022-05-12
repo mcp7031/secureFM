@@ -112,13 +112,14 @@ DATABASES = {
     'ppt_docs': {
         'ENGINE': 'djongo',
         'NAME': 'ppt_db',
-        'HOST': 'localhost',
+        'HOST': '192.168.8.110',
         'ENFORCE_SCHEMA': False,
     }
 }
 
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'utils.exceptionhandler',
+  # 'EXCEPTION_HANDLER': 'api.utils.exceptionhandler',
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler'
 }
 
 # Password validation
