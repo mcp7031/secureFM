@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Nominal, Tenant, Documents, Services, BIMMbyLocation, Location, BIMM, BIM, BIMMbyBIM
+from .models import Nominal, Tenant, Documents,\
+        Services, BIMMbyLocation, Location,\
+        BIMM, BIM, BIMMbyBIM, CostCentre, Personnel, \
+        Contractor, Company
 from pymongo import MongoClient
 from djongo import models as mongo
 # from itertools import chain
@@ -34,11 +37,116 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Documents
         fields = ('docName', 'docDesc')
-        
+
+class PersonnelDocumentSerializer(serializers.ModelSerializer):
+    number = serializers.IntegerField(source='nominal_ptr_id')
+    name = serializers.SerializerMethodField(method_name='get_name')
+    company = serializers.SerializerMethodField(method_name='get_company')
+    documents = serializers.SerializerMethodField(method_name='get_documents')
+    service = serializers.SerializerMethodField(method_name='get_service')
+    contactL1 = serializers.SerializerMethodField(method_name='get_contactL1')
+    contactL2 = serializers.SerializerMethodField(method_name='get_contactL2')
+    contactL3 = serializers.SerializerMethodField(method_name='get_contactL3')
+    
+
+    def get_name(self, nominal: Nominal):
+        return nominal.lastName+", "+nominal.firstName
+
+    def get_contactL1(self, person: Personnel):
+        id = person.contractor_id
+        co = Contractor.objects.get(contractor_id=id)
+        contactL1 = Nominal.objects.select_related().filter(nominal_id=co.contactL1_id)
+        return contactL1.values('lastName', 'firstName', 'mobile')
+    def get_contactL2(self, person: Personnel):
+        id = person.contractor_id
+        co = Contractor.objects.get(contractor_id=id)
+        contactL2 = Nominal.objects.select_related().filter(nominal_id=co.contactL2_id)
+        return contactL2.values('lastName', 'firstName', 'mobile')
+    def get_contactL3(self, person: Personnel):
+        id = person.contractor_id
+        co = Contractor.objects.get(contractor_id=id)
+        contactL3 = Nominal.objects.select_related().filter(nominal_id=co.contactL3_id)
+        return contactL3.values('lastName', 'firstName', 'mobile')
+
+    def get_documents(self, nominal: Nominal):
+        documentSet = Documents.objects.select_related().filter(nominal_id=nominal.nominal_id)
+        return documentSet.values('docName', 'docDesc')
+
+    def get_service(self, nominal: Nominal):
+        service = Services.objects.select_related().filter(services_id=nominal.services_id)
+        return service.values('serviceName')
+   
+    def get_company(self, personnel: Personnel):
+        co = Contractor.objects.select_related().filter(contractor_id=personnel.contractor_id)
+        return co.values('companyName', 'companyNumber', 'companyPhone')
+
+    class Meta:
+        model = Personnel
+        fields = ('number', 'name', 'dateStart', 'company', 'service', 'contactL1', 'contactL2', 'contactL3', 'documents')
+
+class CompanySerializer(serializers.ModelSerializer):
+    number = serializers.IntegerField(source='company_id')
+    contactL1 = serializers.SerializerMethodField(method_name='get_contactL1')
+    contactL2 = serializers.SerializerMethodField(method_name='get_contactL2')
+    contactL3 = serializers.SerializerMethodField(method_name='get_contactL3')
+    
+    def get_contactL1(self, co: Company):
+        contactL1 = Nominal.objects.select_related().filter(nominal_id=co.contactL1_id)
+        return contactL1.values('lastName', 'firstName', 'mobile')
+    def get_contactL2(self, co: Company):
+        contactL2 = Nominal.objects.select_related().filter(nominal_id=co.contactL2_id)
+        return contactL2.values('lastName', 'firstName', 'mobile')
+    def get_contactL3(self, co: Company):
+        contactL3 = Nominal.objects.select_related().filter(nominal_id=co.contactL3_id)
+        return contactL3.values('lastName', 'firstName', 'mobile')
+    
+    class Meta:
+        model = Company
+        fields = ('number', 'compName', 'tradeName', 'contactL1', 'contactL2', 'contactL3')
+
+class CostCentreSerializer(serializers.ModelSerializer):
+    contactL1 = serializers.SerializerMethodField(method_name='get_contactL1')
+    contactL2 = serializers.SerializerMethodField(method_name='get_contactL2')
+    contactL3 = serializers.SerializerMethodField(method_name='get_contactL3')
+    number = serializers.IntegerField(source='costCentre_id')
+    
+    def get_contactL1(self, cc: CostCentre):
+        contactL1 = Nominal.objects.select_related().filter(nominal_id=cc.contactL1_id)
+        return contactL1.values('lastName', 'firstName', 'mobile')
+    def get_contactL2(self, cc: CostCentre):
+        contactL2 = Nominal.objects.select_related().filter(nominal_id=cc.contactL2_id)
+        return contactL2.values('lastName', 'firstName', 'mobile')
+    def get_contactL3(self, cc: CostCentre):
+        contactL3 = Nominal.objects.select_related().filter(nominal_id=cc.contactL3_id)
+        return contactL3.values('lastName', 'firstName', 'mobile')
+    
+    class Meta:
+        model = CostCentre
+        fields = ('number', 'costName', 'costAccount', 'contactL1', 'contactL2', 'contactL3')
+
+
 class LocationSerializer(serializers.ModelSerializer):
-    locNumber = serializers.IntegerField(source='location_id')
-    bimmbyloc = serializers.SerializerMethodField(method_name='get_bimm')
-#        BIMMobjects = mongo.DjongoManager()
+    number = serializers.IntegerField(source='location_id')
+#    costCentre = serializers.SerializerMethodField(method_name='get_cc')
+    costCentre = CostCentreSerializer(many=False, read_only=True)
+
+    def get_cc(self, location: Location):
+#        cc = CostCentre.objects.get(costCentre_id=location.costCentre_id)
+        contactL1 = serializers.SerializerMethodField(method_name='get_contact')
+        ccSet = CostCentre.objects.select_related().filter(costCentre_id=location.costCentre_id)
+        return ccSet.values('costName', 'costAccount', 'contactL1_id')
+
+    def get_contact(self, cc: costCentre):
+        nomSet = Nominal.objects.select_related().filter(nominal_id=cc.contactL1_id)
+        return nomSet.values('lastName'+', '+'firstName')
+
+    class Meta:
+        model = Location
+        fields = ('number', 'locationCode', 'description', 'length', 'width', 'costCentre')
+
+class LocationBIMMSerializer(serializers.ModelSerializer):
+    Number = serializers.IntegerField(source='location_id')
+    BIMMitems = serializers.SerializerMethodField(method_name='get_bimm')
 
     def get_bimm(self, location: Location):
         bimmLocSet = BIMMbyLocation.objects.select_related().filter(location_id=location.location_id)
@@ -53,7 +161,7 @@ class LocationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Location
-        fields = ('locNumber', 'locationCode', 'description', 'bimmbyloc')
+        fields = ('Number', 'locationCode', 'description', 'BIMMitems')
 
 class BIMMSerializer(serializers.ModelSerializer):
     bimmNumber = serializers.IntegerField(source='bimm_id')

@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'djoser',
     'ppt',
     'govern',
     'imanage',
@@ -112,14 +113,21 @@ DATABASES = {
     'ppt_docs': {
         'ENGINE': 'djongo',
         'NAME': 'ppt_db',
-        'HOST': '192.168.8.110',
+        'HOST': '192.168.8.10',
         'ENFORCE_SCHEMA': False,
     }
 }
 
 REST_FRAMEWORK = {
   # 'EXCEPTION_HANDLER': 'api.utils.exceptionhandler',
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler'
+}
+
+SIMPLE_JWT = {
+   'AUTH_HEADER_TYPES': ('JWT',),
 }
 
 # Password validation

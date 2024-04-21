@@ -21,7 +21,8 @@ admin.site.site_header = "SecureFM Administration"
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('tenants.urls')),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt')),
     path('api/ppt/', include('ppt.urls')),
     path('api/imanage/', include('imanage.urls')),
     path('api/govern/', include('govern.urls')),
